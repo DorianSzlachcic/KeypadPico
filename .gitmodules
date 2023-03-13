@@ -1,0 +1,6 @@
+[submodule "thirdparty/littlefs"]
+	path = thirdparty/littlefs
+	url = https://github.com/littlefs-project/littlefs.git
+[submodule "thirdparty/pico-sdk"]
+	path = thirdparty/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
