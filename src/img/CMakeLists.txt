@@ -1,0 +1,1 @@
+add_library(Img img_data.h img_data.c)

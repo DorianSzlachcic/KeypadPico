@@ -10,6 +10,8 @@ add_subdirectory(lib/e-Paper)
 add_subdirectory(lib/Fonts)
 add_subdirectory(lib/GUI)
 add_subdirectory(src/filesystem)
+add_subdirectory(src/img)
+add_subdirectory(src/display)
 
 
 # add a header directory
@@ -17,6 +19,8 @@ include_directories(./lib/Config)
 include_directories(./lib/e-Paper)
 include_directories(./lib/GUI)
 include_directories(./src/filesystem)
+include_directories(./src/img)
+include_directories(./src/display)
 
 
 # generate an executable file
@@ -40,4 +44,4 @@ target_sources(lfs INTERFACE
     ${CMAKE_SOURCE_DIR}/thirdparty/littlefs/lfs_util.c)
 target_link_libraries(lfs INTERFACE pico_stdlib)
 
-target_link_libraries(KeypadPico ePaper GUI Fonts Config pico_stdlib hardware_spi FileSystem)
+target_link_libraries(KeypadPico ePaper GUI Fonts Config pico_stdlib hardware_spi Img Display)
