@@ -12,6 +12,8 @@ add_subdirectory(lib/GUI)
 add_subdirectory(src/filesystem)
 add_subdirectory(src/img)
 add_subdirectory(src/display)
+add_subdirectory(src/button)
+add_subdirectory(src/hid)
 
 
 # add a header directory
@@ -21,15 +23,14 @@ include_directories(./lib/GUI)
 include_directories(./src/filesystem)
 include_directories(./src/img)
 include_directories(./src/display)
+include_directories(./src/button)
+include_directories(./src/hid)
 
 
 # generate an executable file
 add_executable(KeypadPico 
 main.c
-usb_descriptors.c
 )
-
-target_include_directories(KeypadPico PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(KeypadPico 1)
@@ -47,4 +48,17 @@ target_sources(lfs INTERFACE
     ${CMAKE_SOURCE_DIR}/thirdparty/littlefs/lfs_util.c)
 target_link_libraries(lfs INTERFACE pico_stdlib)
 
-target_link_libraries(KeypadPico PUBLIC ePaper GUI Fonts Config pico_stdlib hardware_spi Img Display tinyusb_device tinyusb_board)
+target_link_libraries(KeypadPico PUBLIC 
+    ePaper
+    GUI
+    Fonts
+    Config
+    pico_stdlib
+    hardware_spi
+    Img
+    Display
+    Button
+    HID
+    tinyusb_device
+    tinyusb_board
+)
