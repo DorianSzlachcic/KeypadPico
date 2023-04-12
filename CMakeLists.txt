@@ -54,6 +54,7 @@ target_link_libraries(KeypadPico PUBLIC
     Fonts
     Config
     pico_stdlib
+    pico_unique_id
     hardware_spi
     Img
     Display
@@ -61,4 +62,6 @@ target_link_libraries(KeypadPico PUBLIC
     HID
     tinyusb_device
     tinyusb_board
+    lfs
+    Filesystem
 )
