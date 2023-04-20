@@ -28,46 +28,70 @@ void blink(int t)
     }
 }
 
+void core1_entry()
+{
+    lfs_t lfs;
+    lfs_file_t file;
+
+    // mount the filesystem
+    int err = lfs_mount(&lfs, &PICO_FLASH_CFG);
+
+    // reformat if we can't mount the filesystem
+    // this should only happen on the first boot
+    if (err) {
+        lfs_format(&lfs, &PICO_FLASH_CFG);
+        lfs_mount(&lfs, &PICO_FLASH_CFG);
+    }
+
+    // read current count
+    if(lfs_file_open(&lfs, &file, "config.json", LFS_O_RDWR | LFS_O_CREAT) >= 0)
+    {
+        while(true)
+        {
+            tud_task();
+            if(tud_cdc_connected())
+            {
+                if(tud_cdc_available())
+                {
+                    char i[64];
+                    tud_cdc_read(i, 64);
+                    tud_cdc_read_flush();
+                    lfs_file_write(&lfs, &file, i, 64);
+
+                    tud_cdc_write_str("Ack\n");
+                    tud_cdc_write_flush();
+                    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+                    sleep_ms(100);
+                    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+                }
+            }
+                
+        }
+    }
+}
+
 int main(void)
 {
-    stdio_init_all();
-
     // Turned off while working without screen 
     // if(display_icons() != 0)
     //     return -1;
 
-    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-    gpio_put(LED_PIN, 1);
-
-    buttons_init();
     board_init();
     tusb_init();
+
+    stdio_init_all();
+
+    core1_entry();
+
+    buttons_init();
 
     while(true)
     {
         tud_task();
         unsigned char buttons_state = read_buttons();
-        buttons_task(buttons_state);
-        printf("hello");
+        buttons_task(buttons_state);        
     }
-    // lfs_t lfs;
-    // lfs_file_t file;
 
-    // // mount the filesystem
-    // int err = lfs_mount(&lfs, &PICO_FLASH_CFG);
-
-    // // reformat if we can't mount the filesystem
-    // // this should only happen on the first boot
-    // if (err) {
-    //     lfs_format(&lfs, &PICO_FLASH_CFG);
-    //     lfs_mount(&lfs, &PICO_FLASH_CFG);
-    // }
-
-    // // read current count
-    // uint32_t boot_count = 0;
-    // lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
     // lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
 
     // // update boot count
