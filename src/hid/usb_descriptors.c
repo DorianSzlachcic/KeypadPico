@@ -33,7 +33,6 @@
 
 #include "tusb.h"
 #include "pico/unique_id.h"
-#include "pico/binary_info.h"
 
 // ****************************************************************************
 // *                                                                          *
@@ -89,25 +88,6 @@
 
 #define DEV_MAP(itf, n)         ( (CFG_TUD_##itf) << (n) )
 
-// ****************************************************************************
-// *                                                                          *
-// *    Binary Information for Picotool                                       *
-// *                                                                          *
-// ****************************************************************************
-
-#define BI_GU_TAG               BINARY_INFO_MAKE_TAG('G', 'U')
-#define BI_GU_ID                0x95639AC7
-#define BI_GU_ITF(itf)          bi_decl(bi_string(BI_GU_TAG, BI_GU_ID, itf))
-#define BI_GU_TXT(txt)          bi_decl(bi_program_feature(txt))
-
-bi_decl(bi_program_feature_group_with_flags(
-        BI_GU_TAG, BI_GU_ID, "genusb options",
-        BI_NAMED_GROUP_SEPARATE_COMMAS | BI_NAMED_GROUP_SORT_ALPHA));
-
-BI_GU_TXT("genusb device descriptor generation")
-
-BI_GU_ITF("CDC")
-BI_GU_ITF("HID (KEYBOARD, MOUSE, GAMEPAD, CONSUMER)")
 
 // ****************************************************************************
 // *                                                                          *
@@ -223,7 +203,7 @@ static const uint8_t usbd_desc_cfg[USBD_DESC_LEN] = {
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC,
                       USBD_STR_CDC_NAME,
                          EPNUM_CDC_CMD, USBD_CDC_CMD_SIZE,
-                         EPNUM_CDC_DATA & 0x7F,
+                         0x02,
                          EPNUM_CDC_DATA, USBD_CDC_DATA_SIZE),
 
     TUD_HID_DESCRIPTOR(ITF_NUM_HID,
@@ -247,39 +227,54 @@ const uint8_t *tud_descriptor_configuration_cb(uint8_t index) {
     return usbd_desc_cfg;
 }
 
-const uint16_t *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
-    #define DESC_STR_MAX_LENGTH (20)
-    static uint16_t desc_str[DESC_STR_MAX_LENGTH];
+char const* string_desc_arr [] =
+{
+  (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
+  "TinyUSB",                     // 1: Manufacturer
+  "TinyUSB Device",              // 2: Product
+  "123456789012",                // 3: Serials, should use chip ID
+  "TinyUSB CDC",                 // 4: CDC Interface
+  "TinyUSB MSC",                 // 5: MSC Interface
+};
 
-    uint8_t len;
-    if (index == USBD_STR_LANGUAGE) {
-        desc_str[1] = 0x0409; // Supported language is English
-        len = 1;
-    } else {
-        if (index >= sizeof(usbd_desc_str) / sizeof(usbd_desc_str[0])) {
-            return NULL;
-        }
-        if (index == USBD_STR_SERIAL_NUMBER) {
-            pico_unique_board_id_t id;
-            pico_get_unique_board_id(&id);
-            // byte by byte conversion
-            for (len = 0; len < 16; len += 2) {
-                const char *hexdig = "0123456789ABCDEF";
-                desc_str[1 + len + 0] = hexdig[id.id[len >> 1] >> 4];
-                desc_str[1 + len + 1] = hexdig[id.id[len >> 1] & 0x0F];
-            }
-        } else {
-            const char *str = usbd_desc_str[index];
-            for (len = 0; len < DESC_STR_MAX_LENGTH - 1 && str[len]; ++len) {
-                desc_str[1 + len] = str[len];
-            }
-        }
+static uint16_t _desc_str[32];
+
+// Invoked when received GET STRING DESCRIPTOR request
+// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
+uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
+{
+  (void) langid;
+
+  uint8_t chr_count;
+
+  if ( index == 0)
+  {
+    memcpy(&_desc_str[1], string_desc_arr[0], 2);
+    chr_count = 1;
+  }else
+  {
+    // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
+    // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
+
+    if ( !(index < sizeof(string_desc_arr)/sizeof(string_desc_arr[0])) ) return NULL;
+
+    const char* str = string_desc_arr[index];
+
+    // Cap at max char
+    chr_count = (uint8_t) strlen(str);
+    if ( chr_count > 31 ) chr_count = 31;
+
+    // Convert ASCII string into UTF-16
+    for(uint8_t i=0; i<chr_count; i++)
+    {
+      _desc_str[1+i] = str[i];
     }
+  }
 
-    // first byte is length (including header), second byte is string type
-    desc_str[0] = (TUSB_DESC_STRING << 8) | (2 * len + 2);
+  // first byte is length (including header), second byte is string type
+  _desc_str[0] = (uint16_t) ((TUSB_DESC_STRING << 8 ) | (2*chr_count + 2));
 
-    return desc_str;
+  return _desc_str;
 }
 
 const uint8_t *tud_hid_descriptor_report_cb(uint8_t instance) {

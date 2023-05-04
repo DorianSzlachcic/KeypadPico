@@ -14,6 +14,7 @@ add_subdirectory(src/img)
 add_subdirectory(src/display)
 add_subdirectory(src/button)
 add_subdirectory(src/hid)
+add_subdirectory(src/configuration)
 
 
 # add a header directory
@@ -25,6 +26,7 @@ include_directories(./src/img)
 include_directories(./src/display)
 include_directories(./src/button)
 include_directories(./src/hid)
+include_directories(./src/configuration)
 
 
 # generate an executable file
@@ -64,4 +66,5 @@ target_link_libraries(KeypadPico PUBLIC
     tinyusb_board
     lfs
     Filesystem
+    Configuration
 )

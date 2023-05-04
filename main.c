@@ -81,7 +81,7 @@ int main(void)
 
     stdio_init_all();
 
-    core1_entry();
+    //core1_entry();
 
     buttons_init();
 
@@ -91,21 +91,6 @@ int main(void)
         unsigned char buttons_state = read_buttons();
         buttons_task(buttons_state);        
     }
-
-    // lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
-
-    // // update boot count
-    // boot_count += 1;
-    // lfs_file_rewind(&lfs, &file);
-    // lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
-
-    // // remember the storage is not updated until the file is closed successfully
-    // lfs_file_close(&lfs, &file);
-
-    // // release any resources we were using
-    // lfs_unmount(&lfs);
-
-    // blink(boot_count);
     
     return 0;
 }

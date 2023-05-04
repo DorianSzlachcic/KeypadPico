@@ -4,6 +4,7 @@
 #include "tusb.h"
 #include "hid.h"
 #include "usb_descriptors.h"
+#include "default_config.h"
 
 void buttons_init()
 {
@@ -49,34 +50,41 @@ unsigned char read_buttons()
 }
 
 void buttons_task(unsigned char buttons_state)
-{
+{  
+    struct config configuration = get_default_config();
+
     if((1 << 0) & buttons_state){
-        unsigned char keycode[6] = {HID_KEY_X, 0, 0, 0, 0, 0};
-        send_keyboard_report(L_CTRL, keycode);
+        send_button_report(configuration.button1);
     }
     if((1 << 1) & buttons_state){
-        unsigned char keycode[6] = {HID_KEY_C, 0, 0, 0, 0, 0};
-        send_keyboard_report(L_CTRL, keycode);
+        send_button_report(configuration.button2);
     }
     if((1 << 2) & buttons_state){
-        unsigned char keycode[6] = {HID_KEY_V, 0, 0, 0, 0, 0};
-        send_keyboard_report(L_CTRL, keycode);
+        send_button_report(configuration.button3);
     }
     if((1 << 3) & buttons_state){
-        send_consumer_report(HID_USAGE_CONSUMER_SCAN_PREVIOUS, 2);
+        send_button_report(configuration.button4);
     }
     if((1 << 4) & buttons_state){
-        send_consumer_report(HID_USAGE_CONSUMER_PLAY_PAUSE, 2);
+        send_button_report(configuration.button5);
     }
     if((1 << 5) & buttons_state){
-        send_consumer_report(HID_USAGE_CONSUMER_SCAN_NEXT, 2);
+        send_button_report(configuration.button6);
     }
     if((1 << 6) & buttons_state){
-        unsigned char keycode[6] = {HID_KEY_ESCAPE, 0, 0, 0, 0, 0};
-        send_keyboard_report((L_CTRL | L_SHIFT), keycode);
+        send_button_report(configuration.button7);
     }
     if((1 << 7) & buttons_state){
-        unsigned char keycode[6] = {HID_KEY_DELETE, 0, 0, 0, 0, 0};
-        send_keyboard_report((L_CTRL | L_ALT), keycode);
+        send_button_report(configuration.button8);
     }
+}
+
+
+void send_button_report(struct button btn)
+{
+    if(btn.type == 'k')
+        send_keyboard_report(btn.modifiers, btn.keycode);
+
+    if(btn.type == 'c')
+        send_consumer_report(btn.consumer_report, 2);
 }
